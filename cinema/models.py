@@ -1,6 +1,5 @@
-from django.core.exceptions import ValidationError
-from django.db import models
 from django.conf import settings
+from django.db import models
 
 
 class CinemaHall(models.Model):
@@ -51,8 +50,12 @@ class Movie(models.Model):
 
 class MovieSession(models.Model):
     show_time = models.DateTimeField()
-    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name="movie_sessions")
-    cinema_hall = models.ForeignKey(CinemaHall, on_delete=models.CASCADE, related_name="movie_sessions")
+    movie = models.ForeignKey(
+        Movie, on_delete=models.CASCADE, related_name="movie_sessions"
+    )
+    cinema_hall = models.ForeignKey(
+        CinemaHall, on_delete=models.CASCADE, related_name="movie_sessions"
+    )
 
     class Meta:
         ordering = ["-show_time"]
@@ -88,11 +91,14 @@ class Ticket(models.Model):
     def validate_seat(row, seat, cinema_hall, error_to_raise):
         if not (1 <= row <= cinema_hall.rows):
             raise error_to_raise({
-                "row": f"row number must be in range [1, {cinema_hall.rows}], not {row}"
+                "row": f"row number must be in range [1, {cinema_hall.rows}]"
             })
         if not (1 <= seat <= cinema_hall.seats_in_row):
             raise error_to_raise({
-                "seat": f"seat number must be in range [1, {cinema_hall.seats_in_row}], not {seat}"
+                "seat": (
+                    f"seat number must be in range "
+                    f"[1, {cinema_hall.seats_in_row}]"
+                )
             })
 
     def clean(self):
@@ -100,7 +106,7 @@ class Ticket(models.Model):
             self.row,
             self.seat,
             self.movie_session.cinema_hall,
-            ValidationError
+            ValueError
         )
 
     def save(self, *args, **kwargs):
@@ -108,7 +114,7 @@ class Ticket(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
+        return f"{self.movie_session} (row: {self.row}, seat: {self.seat})"
 
     class Meta:
         unique_together = ("movie_session", "row", "seat")
