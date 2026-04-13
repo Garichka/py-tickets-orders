@@ -168,10 +168,11 @@ class OrderSerializer(serializers.ModelSerializer):
         allow_empty=False
     )
 
-    def create(self, validated_data):
+    def create(self, validated_data, **kwargs):
         with transaction.atomic():
             tickets_data = validated_data.pop("tickets")
-            order = Order.objects.create(**validated_data)
+            user = kwargs.get("user")
+            order = Order.objects.create(user=user, **validated_data)
             for ticket_data in tickets_data:
                 Ticket.objects.create(order=order, **ticket_data)
             return order
